@@ -299,6 +299,8 @@ const initAR = async () => {
     console.log('Target lost');
     isTracking = false;
     instruction.textContent = '📷 Point camera at the photo card';
+  instruction.style.background = 'rgba(0,0,0,0.7)';
+  instruction.style.display = 'block';
     instruction.style.background = 'rgba(0,0,0,0.7)';
     
     if (audioUnlocked) {

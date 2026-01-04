@@ -130,8 +130,7 @@ const music = document.getElementById('music');
 let mindarThree, renderer, scene, camera, anchor;
 let hearts = [];
 let sparkles = [];
-let textMeshes = [];
-let heart3D;
+let textMesh;
 let audioUnlocked = false;
 let audioCtx, analyser, source, dataArray;
 let isTracking = false;
@@ -203,55 +202,23 @@ const initAR = async () => {
     anchor.group.add(sparkle);
   }
   
-  // Create 3D heart (smaller and positioned above photo)
-  const heartGroup = new THREE.Group();
-  
-  // Two spheres for top of heart
-  const sphere1 = new THREE.Mesh(
-    new THREE.SphereGeometry(0.06, 16, 16),
-    new THREE.MeshBasicMaterial({ color: 0xff5fa2 })
-  );
-  sphere1.position.set(-0.04, 0, 0);
-  heartGroup.add(sphere1);
-  
-  const sphere2 = new THREE.Mesh(
-    new THREE.SphereGeometry(0.06, 16, 16),
-    new THREE.MeshBasicMaterial({ color: 0xff5fa2 })
-  );
-  sphere2.position.set(0.04, 0, 0);
-  heartGroup.add(sphere2);
-  
-  // Bottom part of heart
-  const coneGeometry = new THREE.ConeGeometry(0.09, 0.14, 16);
-  const cone = new THREE.Mesh(
-    coneGeometry,
-    new THREE.MeshBasicMaterial({ color: 0xff5fa2 })
-  );
-  cone.position.set(0, -0.08, 0);
-  cone.rotation.z = Math.PI;
-  heartGroup.add(cone);
-  
-  heartGroup.position.set(0, 0.65, 0.03);
-  
-  heart3D = heartGroup;
-  anchor.group.add(heart3D);
-  
-  // Create text using canvas texture - positioned above photo
-  const createText = (text, x) => {
+  // Create "I ❤️ You" text with emoji
+  const createTextWithHeart = () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
+    canvas.width = 1024;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
     
     // Add glow effect
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 30;
     ctx.shadowColor = '#ff5fa2';
     
+    // Draw "I ❤️ You"
     ctx.fillStyle = '#ffcee8';
     ctx.font = 'bold 120px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, 256, 128);
+    ctx.fillText('I ❤️ You', 512, 128);
     
     const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.MeshBasicMaterial({ 
@@ -260,9 +227,9 @@ const initAR = async () => {
       side: THREE.DoubleSide,
       depthTest: false
     });
-    const geometry = new THREE.PlaneGeometry(0.35, 0.175);
+    const geometry = new THREE.PlaneGeometry(1.2, 0.3);
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, 0.85, 0.04);
+    mesh.position.set(0, 0.75, 0.04);
     mesh.renderOrder = 999;
     
     anchor.group.add(mesh);
@@ -270,8 +237,7 @@ const initAR = async () => {
     return mesh;
   };
   
-  const textI = createText('I', -0.35);
-  const textYou = createText('You', 0.35);
+  createTextWithHeart();
   
   // Animation loop
   let time = 0;
@@ -297,16 +263,11 @@ const initAR = async () => {
       sparkle.position.z = Math.sin(sparkle.userData.angle) * sparkle.userData.radius;
     });
     
-    // Animate 3D heart
-    if (heart3D) {
-      heart3D.rotation.y = time * 0.5;
-      heart3D.scale.setScalar(1 + Math.sin(time * 3) * 0.1);
+    // Animate text - pulse and float
+    if (textMesh) {
+      textMesh.scale.setScalar(1 + Math.sin(time * 2.5) * 0.08);
+      textMesh.position.y = 0.75 + Math.sin(time * 1.5) * 0.05;
     }
-    
-    // Animate text
-    textMeshes.forEach(mesh => {
-      mesh.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
-    });
     
     // Beat detection pulse
     if (isTracking && audioCtx && analyser) {
@@ -318,10 +279,10 @@ const initAR = async () => {
         lowFreqSum += dataArray[i];
       }
       let avgLow = lowFreqSum / lowCount;
-      let beatScale = 1 + (avgLow / 150) * 0.3;
+      let beatScale = 1 + (avgLow / 120) * 0.15;
       
-      if (heart3D) {
-        heart3D.scale.setScalar(beatScale);
+      if (textMesh) {
+        textMesh.scale.setScalar(beatScale);
       }
     }
     

@@ -104,14 +104,14 @@
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 60px;
-      height: 60px;
-      background: rgba(255,95,162,0.3);
-      border: 3px solid #ff5fa2;
+      width: 80px;
+      height: 80px;
+      background: rgba(255,95,162,0.6);
+      border: 4px solid #ff5fa2;
       border-radius: 50%;
       z-index: 5;
       display: none;
-      transition: transform 0.1s ease-out;
+      box-shadow: 0 0 30px rgba(255,95,162,0.8);
     }
   </style>
 </head>
@@ -281,7 +281,7 @@ const initAR = async () => {
     }
     
     // Beat detection pulse
-    if (isTracking && audioCtx && analyser) {
+    if (isTracking && audioCtx && analyser && !music.paused) {
       analyser.getByteFrequencyData(dataArray);
       
       let lowFreqSum = 0;
@@ -290,16 +290,23 @@ const initAR = async () => {
         lowFreqSum += dataArray[i];
       }
       let avgLow = lowFreqSum / lowCount;
-      let beatScale = 1 + (avgLow / 120) * 0.15;
+      
+      // MUCH MORE DRAMATIC beat response
+      let beatScale = 1 + (avgLow / 60) * 0.5; // Increased sensitivity
       
       if (textMesh) {
         textMesh.scale.setScalar(beatScale);
       }
       
-      // Visual beat indicator (for testing)
-      let indicatorScale = 1 + (avgLow / 80) * 0.8;
+      // Visual beat indicator (for testing) - VERY obvious
+      let indicatorScale = 0.8 + (avgLow / 50) * 1.5; // Much bigger pulses
       beatIndicator.style.transform = `scale(${indicatorScale})`;
-      beatIndicator.style.opacity = 0.3 + (avgLow / 255) * 0.7;
+      beatIndicator.style.background = `rgba(255, 95, 162, ${0.5 + (avgLow / 255) * 0.5})`;
+      
+      // Console log to verify beat detection is running
+      if (Math.random() < 0.01) { // Log occasionally to avoid spam
+        console.log('Beat level:', avgLow.toFixed(0), 'Scale:', beatScale.toFixed(2));
+      }
     }
     
     renderer.render(scene, camera);

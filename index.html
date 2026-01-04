@@ -312,15 +312,23 @@ const initAR = async () => {
 startButton.addEventListener('click', async () => {
   console.log('Start button clicked');
   
+  // Hide start screen first
+  startScreen.style.display = 'none';
+  instruction.style.display = 'block';
+  instruction.textContent = 'Loading...';
+  
   try {
-    // Setup audio - play then immediately pause to unlock
-    music.volume = 0; // Mute it first
+    // Mute FIRST, then setup audio
+    music.volume = 0;
+    music.muted = true;
+    
     await music.play();
-    console.log('Music played for unlock');
+    console.log('Music played (muted) for unlock');
+    
     music.pause();
     music.currentTime = 0;
-    music.volume = 1; // Restore volume
     
+    // Setup Web Audio API
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     source = audioCtx.createMediaElementSource(music);
     analyser = audioCtx.createAnalyser();
@@ -328,6 +336,10 @@ startButton.addEventListener('click', async () => {
     analyser.connect(audioCtx.destination);
     analyser.fftSize = 512;
     dataArray = new Uint8Array(analyser.frequencyBinCount);
+    
+    // NOW unmute for later use
+    music.muted = false;
+    music.volume = 1;
     
     audioUnlocked = true;
     console.log('Audio unlocked successfully');
@@ -340,9 +352,7 @@ startButton.addEventListener('click', async () => {
   await initAR();
   console.log('AR initialized');
   
-  // Hide start screen
-  startScreen.style.display = 'none';
-  instruction.style.display = 'block';
+  instruction.textContent = '📷 Point camera at the photo card';
   
   // Start AR tracking
   console.log('Starting AR tracking...');

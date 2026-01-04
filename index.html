@@ -311,12 +311,17 @@ const initAR = async () => {
 // Start button handler
 startButton.addEventListener('click', async () => {
   try {
-    // Setup audio (but don't play yet)
-    await music.play();
-    music.pause();
-    music.currentTime = 0;
-    
+    // Setup audio context ONLY (don't touch the music element yet)
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // We need to play and immediately pause to unlock audio on iOS/mobile
+    // But we'll use a silent approach
+    const silentAudio = new Audio();
+    silentAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADhADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD/////////////////////////////////////////////////////////////////////////////////////////////////AAAAAExhdmM1OC4xMzQAAAAAAAAAAAAAAAAkAAAAAAAAAAADhGfCmEcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQZDQP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==';
+    await silentAudio.play();
+    silentAudio.pause();
+    
+    // Now setup the real music element for later use
     source = audioCtx.createMediaElementSource(music);
     analyser = audioCtx.createAnalyser();
     source.connect(analyser);
@@ -325,7 +330,7 @@ startButton.addEventListener('click', async () => {
     dataArray = new Uint8Array(analyser.frequencyBinCount);
     
     audioUnlocked = true;
-    console.log('Audio unlocked (ready to play)');
+    console.log('Audio unlocked (music ready but not playing)');
   } catch (err) {
     console.log('Audio setup failed:', err);
   }

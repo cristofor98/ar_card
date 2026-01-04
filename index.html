@@ -282,42 +282,8 @@ const initAR = async () => {
     
     renderer.render(scene, camera);
   });
-};
-
-// Start button handler
-startButton.addEventListener('click', async () => {
-  try {
-    // Setup audio
-    await music.play();
-    music.pause();
-    music.currentTime = 0;
-    
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    source = audioCtx.createMediaElementSource(music);
-    analyser = audioCtx.createAnalyser();
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    analyser.fftSize = 512;
-    dataArray = new Uint8Array(analyser.frequencyBinCount);
-    
-    audioUnlocked = true;
-    console.log('Audio unlocked');
-  } catch (err) {
-    console.log('Audio setup failed:', err);
-  }
   
-  // Initialize AR
-  await initAR();
-  
-  // Hide start screen
-  startScreen.style.display = 'none';
-  instruction.style.display = 'block';
-  
-  // Start AR tracking
-  await mindarThree.start();
-  console.log('AR Started');
-  
-  // Listen for anchor events
+  // Setup target detection AFTER everything is initialized
   anchor.onTargetFound = () => {
     console.log('Target found!');
     isTracking = true;
@@ -340,6 +306,40 @@ startButton.addEventListener('click', async () => {
       music.currentTime = 0;
     }
   };
+};
+
+// Start button handler
+startButton.addEventListener('click', async () => {
+  try {
+    // Setup audio (but don't play yet)
+    await music.play();
+    music.pause();
+    music.currentTime = 0;
+    
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    source = audioCtx.createMediaElementSource(music);
+    analyser = audioCtx.createAnalyser();
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    analyser.fftSize = 512;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    
+    audioUnlocked = true;
+    console.log('Audio unlocked (ready to play)');
+  } catch (err) {
+    console.log('Audio setup failed:', err);
+  }
+  
+  // Initialize AR
+  await initAR();
+  
+  // Hide start screen
+  startScreen.style.display = 'none';
+  instruction.style.display = 'block';
+  
+  // Start AR tracking
+  await mindarThree.start();
+  console.log('AR Started - waiting for photo detection');
 });
 
 console.log('Magical AR Love Card loaded');

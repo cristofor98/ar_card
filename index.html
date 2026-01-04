@@ -203,41 +203,35 @@ const initAR = async () => {
   }
   
   // Create "I ❤️ You" text with emoji
-  const createTextWithHeart = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-    
-    // Add glow effect
-    ctx.shadowBlur = 30;
-    ctx.shadowColor = '#ff5fa2';
-    
-    // Draw "I ❤️ You"
-    ctx.fillStyle = '#ffcee8';
-    ctx.font = 'bold 120px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('I ❤️ You', 512, 128);
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    const material = new THREE.MeshBasicMaterial({ 
-      map: texture,
-      transparent: true,
-      side: THREE.DoubleSide,
-      depthTest: false
-    });
-    const geometry = new THREE.PlaneGeometry(1.2, 0.3);
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(0, 0.75, 0.04);
-    mesh.renderOrder = 999;
-    
-    anchor.group.add(mesh);
-    textMeshes.push(mesh);
-    return mesh;
-  };
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
   
-  createTextWithHeart();
+  // Add glow effect
+  ctx.shadowBlur = 30;
+  ctx.shadowColor = '#ff5fa2';
+  
+  // Draw "I ❤️ You"
+  ctx.fillStyle = '#ffcee8';
+  ctx.font = 'bold 120px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('I ❤️ You', 512, 128);
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.MeshBasicMaterial({ 
+    map: texture,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthTest: false
+  });
+  const geometry = new THREE.PlaneGeometry(1.2, 0.3);
+  textMesh = new THREE.Mesh(geometry, material);
+  textMesh.position.set(0, 0.75, 0.04);
+  textMesh.renderOrder = 999;
+  
+  anchor.group.add(textMesh);
   
   // Animation loop
   let time = 0;

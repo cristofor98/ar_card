@@ -99,20 +99,6 @@
       font-size: 16px;
       display: none;
     }
-    
-    #beatIndicator {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 80px;
-      height: 80px;
-      background: rgba(255,95,162,0.6);
-      border: 4px solid #ff5fa2;
-      border-radius: 50%;
-      z-index: 5;
-      display: none;
-      box-shadow: 0 0 30px rgba(255,95,162,0.8);
-    }
   </style>
 </head>
 
@@ -128,8 +114,6 @@
 
 <div id="instruction">📷 Point camera at the photo card</div>
 
-<div id="beatIndicator"></div>
-
 <div id="container"></div>
 
 <audio id="music" src="./music.mp3" loop></audio>
@@ -141,7 +125,6 @@ import { MindARThree } from 'mindar-image-three';
 const startScreen = document.getElementById('startScreen');
 const startButton = document.getElementById('startButton');
 const instruction = document.getElementById('instruction');
-const beatIndicator = document.getElementById('beatIndicator');
 const music = document.getElementById('music');
 
 let mindarThree, renderer, scene, camera, anchor;
@@ -291,21 +274,11 @@ const initAR = async () => {
       }
       let avgLow = lowFreqSum / lowCount;
       
-      // MUCH MORE DRAMATIC beat response
-      let beatScale = 1 + (avgLow / 60) * 0.5; // Increased sensitivity
+      // Beat response for text
+      let beatScale = 1 + (avgLow / 60) * 0.5;
       
       if (textMesh) {
         textMesh.scale.setScalar(beatScale);
-      }
-      
-      // Visual beat indicator (for testing) - VERY obvious
-      let indicatorScale = 0.8 + (avgLow / 50) * 1.5; // Much bigger pulses
-      beatIndicator.style.transform = `scale(${indicatorScale})`;
-      beatIndicator.style.background = `rgba(255, 95, 162, ${0.5 + (avgLow / 255) * 0.5})`;
-      
-      // Console log to verify beat detection is running
-      if (Math.random() < 0.01) { // Log occasionally to avoid spam
-        console.log('Beat level:', avgLow.toFixed(0), 'Scale:', beatScale.toFixed(2));
       }
     }
     

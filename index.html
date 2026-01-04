@@ -146,114 +146,132 @@ const initAR = async () => {
   ({ renderer, scene, camera } = mindarThree);
   anchor = mindarThree.addAnchor(0);
   
-  // Create hearts particles
-  const heartGeometry = new THREE.SphereGeometry(0.02, 8, 8);
-  const heartMaterial = new THREE.MeshBasicMaterial({ 
-    color: 0xff5fa2,
-    transparent: true,
-    opacity: 0.8
-  });
+  // Create hearts particles (using heart shape sprites)
+  const heartCanvas = document.createElement('canvas');
+  heartCanvas.width = 64;
+  heartCanvas.height = 64;
+  const heartCtx = heartCanvas.getContext('2d');
+  heartCtx.font = '50px Arial';
+  heartCtx.textAlign = 'center';
+  heartCtx.textBaseline = 'middle';
+  heartCtx.fillText('❤️', 32, 32);
   
-  for (let i = 0; i < 50; i++) {
-    const heart = new THREE.Mesh(heartGeometry, heartMaterial.clone());
-    heart.position.set(
-      (Math.random() - 0.5) * 1,
-      Math.random() * -0.5,
-      0
-    );
-    heart.userData.velocity = {
-      y: 0.002 + Math.random() * 0.003,
-      x: (Math.random() - 0.5) * 0.001
-    };
-    heart.userData.startY = heart.position.y;
-    hearts.push(heart);
-    anchor.group.add(heart);
-  }
-  
-  // Create sparkles
-  const sparkleGeometry = new THREE.SphereGeometry(0.01, 8, 8);
-  const sparkleMaterial = new THREE.MeshBasicMaterial({ 
-    color: 0xffffff,
+  const heartTexture = new THREE.CanvasTexture(heartCanvas);
+  const heartSpriteMaterial = new THREE.SpriteMaterial({ 
+    map: heartTexture,
     transparent: true,
     opacity: 0.9
   });
   
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 30; i++) {
+    const heart = new THREE.Sprite(heartSpriteMaterial.clone());
+    heart.scale.set(0.08, 0.08, 1);
+    heart.position.set(
+      (Math.random() - 0.5) * 1.2,
+      -0.8 + Math.random() * 0.2,
+      0.05
+    );
+    heart.userData.velocity = {
+      y: 0.003 + Math.random() * 0.004,
+      x: (Math.random() - 0.5) * 0.002
+    };
+    hearts.push(heart);
+    anchor.group.add(heart);
+  }
+  
+  // Create sparkles (smaller and more subtle)
+  const sparkleGeometry = new THREE.SphereGeometry(0.008, 8, 8);
+  const sparkleMaterial = new THREE.MeshBasicMaterial({ 
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.8
+  });
+  
+  for (let i = 0; i < 80; i++) {
     const sparkle = new THREE.Mesh(sparkleGeometry, sparkleMaterial.clone());
-    const angle = (i / 100) * Math.PI * 2;
-    const radius = 0.3 + Math.random() * 0.2;
+    const angle = (i / 80) * Math.PI * 2;
+    const radius = 0.4 + Math.random() * 0.3;
     sparkle.position.set(
       Math.cos(angle) * radius,
-      0.3 + Math.random() * 0.2,
-      0
+      0.6 + Math.random() * 0.3,
+      0.02
     );
     sparkle.userData.angle = angle;
     sparkle.userData.radius = radius;
-    sparkle.userData.speed = 0.01 + Math.random() * 0.01;
+    sparkle.userData.speed = 0.015 + Math.random() * 0.015;
     sparkles.push(sparkle);
     anchor.group.add(sparkle);
   }
   
-  // Create 3D heart
+  // Create 3D heart (smaller and positioned above photo)
   const heartGroup = new THREE.Group();
   
   // Two spheres for top of heart
   const sphere1 = new THREE.Mesh(
-    new THREE.SphereGeometry(0.08, 16, 16),
+    new THREE.SphereGeometry(0.06, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xff5fa2 })
   );
-  sphere1.position.set(-0.05, 0.3, 0);
+  sphere1.position.set(-0.04, 0, 0);
   heartGroup.add(sphere1);
   
   const sphere2 = new THREE.Mesh(
-    new THREE.SphereGeometry(0.08, 16, 16),
+    new THREE.SphereGeometry(0.06, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xff5fa2 })
   );
-  sphere2.position.set(0.05, 0.3, 0);
+  sphere2.position.set(0.04, 0, 0);
   heartGroup.add(sphere2);
   
   // Bottom part of heart
-  const coneGeometry = new THREE.ConeGeometry(0.12, 0.18, 16);
+  const coneGeometry = new THREE.ConeGeometry(0.09, 0.14, 16);
   const cone = new THREE.Mesh(
     coneGeometry,
     new THREE.MeshBasicMaterial({ color: 0xff5fa2 })
   );
-  cone.position.set(0, 0.15, 0);
+  cone.position.set(0, -0.08, 0);
   cone.rotation.z = Math.PI;
   heartGroup.add(cone);
+  
+  heartGroup.position.set(0, 0.65, 0.03);
   
   heart3D = heartGroup;
   anchor.group.add(heart3D);
   
-  // Create text using canvas texture
+  // Create text using canvas texture - positioned above photo
   const createText = (text, x) => {
     const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 128;
+    canvas.width = 512;
+    canvas.height = 256;
     const ctx = canvas.getContext('2d');
+    
+    // Add glow effect
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = '#ff5fa2';
+    
     ctx.fillStyle = '#ffcee8';
-    ctx.font = 'bold 80px Arial';
+    ctx.font = 'bold 120px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, 128, 64);
+    ctx.fillText(text, 256, 128);
     
     const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.MeshBasicMaterial({ 
       map: texture,
       transparent: true,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      depthTest: false
     });
-    const geometry = new THREE.PlaneGeometry(0.3, 0.15);
+    const geometry = new THREE.PlaneGeometry(0.35, 0.175);
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, 0.5, 0);
+    mesh.position.set(x, 0.85, 0.04);
+    mesh.renderOrder = 999;
     
     anchor.group.add(mesh);
     textMeshes.push(mesh);
     return mesh;
   };
   
-  createText('I', -0.4);
-  createText('You', 0.4);
+  const textI = createText('I', -0.35);
+  const textYou = createText('You', 0.35);
   
   // Animation loop
   let time = 0;
@@ -265,11 +283,11 @@ const initAR = async () => {
       heart.position.y += heart.userData.velocity.y;
       heart.position.x += heart.userData.velocity.x;
       
-      if (heart.position.y > 0.8) {
-        heart.position.y = -0.5;
+      // Reset when goes too high
+      if (heart.position.y > 1.2) {
+        heart.position.y = -0.8;
+        heart.position.x = (Math.random() - 0.5) * 1.2;
       }
-      
-      heart.rotation.z += 0.02;
     });
     
     // Animate sparkles

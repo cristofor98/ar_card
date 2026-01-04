@@ -310,18 +310,18 @@ const initAR = async () => {
 
 // Start button handler
 startButton.addEventListener('click', async () => {
+  console.log('Start button clicked');
+  
   try {
-    // Setup audio context ONLY (don't touch the music element yet)
+    // Setup audio - play then immediately pause to unlock
+    music.volume = 0; // Mute it first
+    await music.play();
+    console.log('Music played for unlock');
+    music.pause();
+    music.currentTime = 0;
+    music.volume = 1; // Restore volume
+    
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    // We need to play and immediately pause to unlock audio on iOS/mobile
-    // But we'll use a silent approach
-    const silentAudio = new Audio();
-    silentAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADhADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD/////////////////////////////////////////////////////////////////////////////////////////////////AAAAAExhdmM1OC4xMzQAAAAAAAAAAAAAAAAkAAAAAAAAAAADhGfCmEcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQZDQP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==';
-    await silentAudio.play();
-    silentAudio.pause();
-    
-    // Now setup the real music element for later use
     source = audioCtx.createMediaElementSource(music);
     analyser = audioCtx.createAnalyser();
     source.connect(analyser);
@@ -330,21 +330,24 @@ startButton.addEventListener('click', async () => {
     dataArray = new Uint8Array(analyser.frequencyBinCount);
     
     audioUnlocked = true;
-    console.log('Audio unlocked (music ready but not playing)');
+    console.log('Audio unlocked successfully');
   } catch (err) {
     console.log('Audio setup failed:', err);
   }
   
   // Initialize AR
+  console.log('Initializing AR...');
   await initAR();
+  console.log('AR initialized');
   
   // Hide start screen
   startScreen.style.display = 'none';
   instruction.style.display = 'block';
   
   // Start AR tracking
+  console.log('Starting AR tracking...');
   await mindarThree.start();
-  console.log('AR Started - waiting for photo detection');
+  console.log('AR tracking started - point at photo!');
 });
 
 console.log('Magical AR Love Card loaded');

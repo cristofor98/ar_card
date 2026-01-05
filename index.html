@@ -320,6 +320,13 @@ function createEffects(anchor, index) {
     anchor.group.add(sparkle);
   }
   
+  // Different text for each photo
+  const texts = [
+    'I ❤️ You',           // Photo 1
+    'Happy Holidays',     // Photo 2
+    'Merry Christmas'     // Photo 3
+  ];
+  
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 256;
@@ -328,10 +335,10 @@ function createEffects(anchor, index) {
   ctx.shadowBlur = 30;
   ctx.shadowColor = '#ff5fa2';
   ctx.fillStyle = '#ffcee8';
-  ctx.font = 'bold 120px Arial';
+  ctx.font = 'bold 100px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('I ❤️ You', 512, 128);
+  ctx.fillText(texts[index], 512, 128);
   
   const texture = new THREE.CanvasTexture(canvas);
   const material = new THREE.MeshBasicMaterial({ 
@@ -340,7 +347,7 @@ function createEffects(anchor, index) {
     side: THREE.DoubleSide,
     depthTest: false
   });
-  const geometry = new THREE.PlaneGeometry(1.2, 0.3);
+  const geometry = new THREE.PlaneGeometry(1.4, 0.35);
   const textMesh = new THREE.Mesh(geometry, material);
   textMesh.position.set(0, 0.75, 0.04);
   textMesh.renderOrder = 999;

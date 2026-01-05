@@ -139,7 +139,7 @@ let mindarThree, renderer, scene, camera;
 let anchors = [];
 let currentTrackingIndex = -1;
 let audioUnlocked = false;
-let audioCtx, analyser1, analyser2, analyser3, source1, source2, source3, dataArray;
+let audioCtx;
 
 // Initialize MindAR with 3 targets (maxTrack: 1 means only one at a time)
 const initAR = async () => {
@@ -197,22 +197,40 @@ const initAR = async () => {
     });
     
     // Beat detection for currently tracked photo
-    if (currentTrackingIndex >= 0 && audioCtx && !music1.paused) {
-      const analyser = [analyser1, analyser2, analyser3][currentTrackingIndex];
-      if (analyser) {
-        analyser.getByteFrequencyData(dataArray);
-        
-        let lowFreqSum = 0;
-        let lowCount = Math.floor(dataArray.length * 0.15);
-        for (let i = 0; i < lowCount; i++) {
-          lowFreqSum += dataArray[i];
+    if (currentTrackingIndex >= 0) {
+      const currentMusic = [music1, music2, music3][currentTrackingIndex];
+      
+      if (currentMusic && !currentMusic.paused && audioCtx) {
+        // Create analyser on-demand if needed
+        if (!currentMusic.analyser) {
+          try {
+            const source = audioCtx.createMediaElementSource(currentMusic);
+            const analyser = audioCtx.createAnalyser();
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
+            analyser.fftSize = 512;
+            currentMusic.analyser = analyser;
+            currentMusic.dataArray = new Uint8Array(analyser.frequencyBinCount);
+          } catch (err) {
+            console.log('Analyser setup failed:', err);
+          }
         }
-        let avgLow = lowFreqSum / lowCount;
-        let beatScale = 1 + (avgLow / 60) * 0.5;
         
-        const textMesh = anchors[currentTrackingIndex].userData?.textMesh;
-        if (textMesh) {
-          textMesh.scale.setScalar(beatScale);
+        if (currentMusic.analyser) {
+          currentMusic.analyser.getByteFrequencyData(currentMusic.dataArray);
+          
+          let lowFreqSum = 0;
+          let lowCount = Math.floor(currentMusic.dataArray.length * 0.15);
+          for (let i = 0; i < lowCount; i++) {
+            lowFreqSum += currentMusic.dataArray[i];
+          }
+          let avgLow = lowFreqSum / lowCount;
+          let beatScale = 1 + (avgLow / 60) * 0.5;
+          
+          const textMesh = anchors[currentTrackingIndex].userData?.textMesh;
+          if (textMesh) {
+            textMesh.scale.setScalar(beatScale);
+          }
         }
       }
     }
@@ -375,31 +393,10 @@ startButton.addEventListener('click', async () => {
   instruction.textContent = 'Loading...';
   
   try {
-    // Create AudioContext
+    // Create AudioContext only (don't connect audio elements yet)
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
-    // Setup all 3 music sources
-    source1 = audioCtx.createMediaElementSource(music1);
-    analyser1 = audioCtx.createAnalyser();
-    source1.connect(analyser1);
-    analyser1.connect(audioCtx.destination);
-    analyser1.fftSize = 512;
-    
-    source2 = audioCtx.createMediaElementSource(music2);
-    analyser2 = audioCtx.createAnalyser();
-    source2.connect(analyser2);
-    analyser2.connect(audioCtx.destination);
-    analyser2.fftSize = 512;
-    
-    source3 = audioCtx.createMediaElementSource(music3);
-    analyser3 = audioCtx.createAnalyser();
-    source3.connect(analyser3);
-    analyser3.connect(audioCtx.destination);
-    analyser3.fftSize = 512;
-    
-    dataArray = new Uint8Array(analyser1.frequencyBinCount);
-    
-    // Make sure all music is stopped
+    // Make sure all music is stopped and ready
     [music1, music2, music3].forEach(m => {
       m.pause();
       m.currentTime = 0;

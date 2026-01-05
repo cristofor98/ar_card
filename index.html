@@ -138,6 +138,7 @@ let mindarThree, renderer, scene, camera;
 let anchors = [];
 let currentTrackingIndex = -1;
 let audioCtx;
+let musicUnlocked = [false, false, false]; // Track which music is unlocked
 
 const initAR = async () => {
   mindarThree = new MindARThree({
@@ -226,7 +227,7 @@ const initAR = async () => {
   });
   
   anchors.forEach((anchor, index) => {
-    anchor.onTargetFound = () => {
+    anchor.onTargetFound = async () => {
       console.log(`Target ${index + 1} found!`);
       currentTrackingIndex = index;
       instruction.style.display = 'none';
@@ -237,6 +238,26 @@ const initAR = async () => {
       });
       
       const musicToPlay = [music1, music2, music3][index];
+      
+      // Unlock this music if not already unlocked
+      if (!musicUnlocked[index]) {
+        console.log(`Unlocking music ${index + 1}...`);
+        try {
+          musicToPlay.volume = 0;
+          musicToPlay.muted = true;
+          await musicToPlay.play();
+          await musicToPlay.pause();
+          musicToPlay.currentTime = 0;
+          musicToPlay.muted = false;
+          musicToPlay.volume = 1;
+          musicUnlocked[index] = true;
+          console.log(`Music ${index + 1} unlocked`);
+        } catch (err) {
+          console.log(`Failed to unlock music ${index + 1}:`, err);
+        }
+      }
+      
+      // Now play it
       musicToPlay.play()
         .then(() => console.log(`Music ${index + 1} playing!`))
         .catch(err => console.error(`Music ${index + 1} failed:`, err.name));
@@ -357,9 +378,9 @@ startButton.addEventListener('click', async () => {
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
-    console.log('Unlocking all 3 music files...');
+    console.log('Unlocking music 1...');
     
-    // Music 1
+    // Only unlock music 1 at start (like the original working version)
     music1.volume = 0;
     music1.muted = true;
     await music1.play();
@@ -367,37 +388,14 @@ startButton.addEventListener('click', async () => {
     music1.currentTime = 0;
     music1.muted = false;
     music1.volume = 1;
-    console.log('Music 1 unlocked');
-    
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Music 2
-    music2.volume = 0;
-    music2.muted = true;
-    await music2.play();
-    await music2.pause();
-    music2.currentTime = 0;
-    music2.muted = false;
-    music2.volume = 1;
-    console.log('Music 2 unlocked');
-    
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Music 3
-    music3.volume = 0;
-    music3.muted = true;
-    await music3.play();
-    await music3.pause();
-    music3.currentTime = 0;
-    music3.muted = false;
-    music3.volume = 1;
-    console.log('Music 3 unlocked');
+    musicUnlocked[0] = true;
+    console.log('Music 1 unlocked - others will unlock on demand');
     
     if (audioCtx.state === 'suspended') {
       await audioCtx.resume();
     }
     
-    console.log('All 3 music files unlocked!');
+    console.log('Audio ready!');
   } catch (err) {
     console.log('Audio setup failed:', err);
   }

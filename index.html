@@ -103,30 +103,6 @@
       font-size: 16px;
       display: none;
     }
-    
-    #playButton {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, #ff5fa2, #ff8fc7);
-      color: white;
-      border: none;
-      padding: 15px 40px;
-      font-size: 18px;
-      border-radius: 50px;
-      cursor: pointer;
-      z-index: 10;
-      box-shadow: 0 4px 20px rgba(255,95,162,0.6);
-      font-weight: bold;
-      display: none;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { transform: translateX(-50%) scale(1); }
-      50% { transform: translateX(-50%) scale(1.05); }
-    }
   </style>
 </head>
 
@@ -142,8 +118,6 @@
 
 <div id="instruction">📷 Point camera at a photo card</div>
 
-<button id="playButton">🎵 Tap to Play Music</button>
-
 <div id="container"></div>
 
 <audio id="music1" src="./music.mp3" loop></audio>
@@ -157,7 +131,6 @@ import { MindARThree } from 'mindar-image-three';
 const startScreen = document.getElementById('startScreen');
 const startButton = document.getElementById('startButton');
 const instruction = document.getElementById('instruction');
-const playButton = document.getElementById('playButton');
 const music1 = document.getElementById('music1');
 const music2 = document.getElementById('music2');
 const music3 = document.getElementById('music3');
@@ -165,10 +138,9 @@ const music3 = document.getElementById('music3');
 let mindarThree, renderer, scene, camera;
 let anchors = [];
 let currentTrackingIndex = -1;
-let pendingMusicIndex = -1; // Which music is waiting to play
 let audioUnlocked = false;
 let audioCtx;
-let unlockedMusic = {}; // Track which music files are unlocked
+let unlockedMusic = {};
 
 // Initialize MindAR with 3 targets (maxTrack: 1 means only one at a time)
 const initAR = async () => {
@@ -280,17 +252,17 @@ const initAR = async () => {
         m.currentTime = 0;
       });
       
-      // Play the corresponding music (should work automatically now)
+      // Play the corresponding music
       const musicToPlay = [music1, music2, music3][index];
+      console.log(`Playing music ${index + 1}`);
       
-      if (unlockedMusic[index]) {
-        console.log(`Playing music ${index + 1} (already unlocked)`);
-        playMusicDirectly(musicToPlay, index);
-      } else {
-        console.log(`Music ${index + 1} not unlocked, showing button`);
-        pendingMusicIndex = index;
-        playButton.style.display = 'block';
-      }
+      musicToPlay.play()
+        .then(() => {
+          console.log(`Music ${index + 1} playing successfully!`);
+        })
+        .catch(err => {
+          console.error(`Music ${index + 1} play failed:`, err.name, err.message);
+        });
     };
     
     anchor.onTargetLost = () => {
@@ -298,11 +270,9 @@ const initAR = async () => {
       
       if (currentTrackingIndex === index) {
         currentTrackingIndex = -1;
-        pendingMusicIndex = -1;
         instruction.style.display = 'block';
         instruction.textContent = '📷 Point camera at a photo card';
         instruction.style.background = 'rgba(0,0,0,0.7)';
-        playButton.style.display = 'none';
         
         // Stop music
         const musicToStop = [music1, music2, music3][index];
@@ -475,11 +445,13 @@ startButton.addEventListener('click', async () => {
     console.log('Unlocking all 3 music files...');
     
     // Music 1
+    music1.volume = 0;
     music1.muted = true;
     await music1.play();
     await music1.pause();
     music1.currentTime = 0;
     music1.muted = false;
+    music1.volume = 1;
     unlockedMusic[0] = true;
     console.log('Music 1 unlocked');
     
@@ -487,22 +459,26 @@ startButton.addEventListener('click', async () => {
     await new Promise(resolve => setTimeout(resolve, 50));
     
     // Music 2
+    music2.volume = 0;
     music2.muted = true;
     await music2.play();
     await music2.pause();
     music2.currentTime = 0;
     music2.muted = false;
+    music2.volume = 1;
     unlockedMusic[1] = true;
     console.log('Music 2 unlocked');
     
     await new Promise(resolve => setTimeout(resolve, 50));
     
     // Music 3
+    music3.volume = 0;
     music3.muted = true;
     await music3.play();
     await music3.pause();
     music3.currentTime = 0;
     music3.muted = false;
+    music3.volume = 1;
     unlockedMusic[2] = true;
     console.log('Music 3 unlocked');
     

@@ -335,7 +335,14 @@ function createEffects(anchor, index) {
   ctx.shadowBlur = 30;
   ctx.shadowColor = '#ff5fa2';
   ctx.fillStyle = '#ffcee8';
-  ctx.font = 'bold 100px Arial';
+  
+  // Smaller font for longer text
+  if (index === 0) {
+    ctx.font = 'bold 100px Arial'; // "I ❤️ You" - shorter
+  } else {
+    ctx.font = 'bold 70px Arial'; // "Happy Holidays" / "Merry Christmas" - longer
+  }
+  
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(texts[index], 512, 128);
@@ -347,7 +354,7 @@ function createEffects(anchor, index) {
     side: THREE.DoubleSide,
     depthTest: false
   });
-  const geometry = new THREE.PlaneGeometry(1.4, 0.35);
+  const geometry = new THREE.PlaneGeometry(1.2, 0.3);
   const textMesh = new THREE.Mesh(geometry, material);
   textMesh.position.set(0, 0.75, 0.04);
   textMesh.renderOrder = 999;

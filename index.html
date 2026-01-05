@@ -359,29 +359,29 @@ startButton.addEventListener('click', async () => {
     
     console.log('Unlocking all 3 music files...');
     
-    music1.volume = 0;
+    music1.muted = true;
     await music1.play();
     music1.pause();
     music1.currentTime = 0;
-    music1.volume = 1;
+    music1.muted = false;
     console.log('Music 1 unlocked');
     
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    music2.volume = 0;
+    music2.muted = true;
     await music2.play();
     music2.pause();
     music2.currentTime = 0;
-    music2.volume = 1;
+    music2.muted = false;
     console.log('Music 2 unlocked');
     
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    music3.volume = 0;
+    music3.muted = true;
     await music3.play();
     music3.pause();
     music3.currentTime = 0;
-    music3.volume = 1;
+    music3.muted = false;
     console.log('Music 3 unlocked');
     
     if (audioCtx.state === 'suspended') {

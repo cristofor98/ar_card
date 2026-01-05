@@ -140,6 +140,7 @@ let anchors = [];
 let currentTrackingIndex = -1;
 let audioUnlocked = false;
 let audioCtx;
+let unlockedMusic = {}; // Track which music files are unlocked
 
 // Initialize MindAR with 3 targets (maxTrack: 1 means only one at a time)
 const initAR = async () => {
@@ -257,15 +258,17 @@ const initAR = async () => {
         console.log(`Attempting to play music ${index + 1}...`);
         console.log('Music paused?', musicToPlay.paused);
         console.log('Music src:', musicToPlay.src);
+        console.log('AudioContext state:', audioCtx.state);
         
-        musicToPlay.play()
-          .then(() => {
-            console.log(`Music ${index + 1} playing successfully!`);
-            console.log('Music playing:', !musicToPlay.paused);
-          })
-          .catch(err => {
-            console.error(`Music ${index + 1} play failed:`, err);
+        // Resume audio context if suspended
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume().then(() => {
+            console.log('AudioContext resumed');
+            playMusic(musicToPlay, index);
           });
+        } else {
+          playMusic(musicToPlay, index);
+        }
       } else {
         console.log('Audio not unlocked!');
       }
@@ -289,6 +292,34 @@ const initAR = async () => {
     };
   });
 };
+
+// Helper function to play music (unlock on first play if needed)
+async function playMusic(musicElement, index) {
+  // If this music hasn't been unlocked yet, unlock it now
+  if (!unlockedMusic[index]) {
+    console.log(`Unlocking music ${index + 1}...`);
+    try {
+      musicElement.volume = 0;
+      await musicElement.play();
+      musicElement.pause();
+      musicElement.currentTime = 0;
+      musicElement.volume = 1;
+      unlockedMusic[index] = true;
+      console.log(`Music ${index + 1} unlocked`);
+    } catch (err) {
+      console.log(`Failed to unlock music ${index + 1}:`, err);
+    }
+  }
+  
+  // Now play it
+  musicElement.play()
+    .then(() => {
+      console.log(`Music ${index + 1} playing successfully!`);
+    })
+    .catch(err => {
+      console.error(`Music ${index + 1} play failed:`, err.name, err.message);
+    });
+}
 
 // Create effects for each anchor
 function createEffects(anchor, index) {
@@ -393,22 +424,26 @@ startButton.addEventListener('click', async () => {
   instruction.textContent = 'Loading...';
   
   try {
-    // Create AudioContext only (don't connect audio elements yet)
+    // Create AudioContext
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
-    // Make sure all music is stopped and ready
-    [music1, music2, music3].forEach(m => {
-      m.pause();
-      m.currentTime = 0;
-      m.volume = 1;
-    });
+    // Just unlock ONE music file to start (like before when it worked)
+    music1.volume = 0;
+    music1.muted = true;
+    
+    await music1.play();
+    music1.pause();
+    music1.currentTime = 0;
+    
+    music1.muted = false;
+    music1.volume = 1;
     
     if (audioCtx.state === 'suspended') {
       await audioCtx.resume();
     }
     
     audioUnlocked = true;
-    console.log('Audio unlocked - all 3 songs ready');
+    console.log('Audio context unlocked');
   } catch (err) {
     console.log('Audio setup failed:', err);
   }

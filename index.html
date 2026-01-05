@@ -362,33 +362,44 @@ startButton.addEventListener('click', async () => {
     
     console.log('Unlocking all 3 music files...');
     
-    // Set all to silent FIRST
-    music1.volume = 0;
-    music2.volume = 0;
-    music3.volume = 0;
-    music1.muted = true;
-    music2.muted = true;
-    music3.muted = true;
-    
     // Unlock music 1
+    music1.volume = 0;
+    music1.muted = true;
     await music1.play();
+    console.log('Music 1 playing (muted)...');
+    await new Promise(resolve => setTimeout(resolve, 50));
     music1.pause();
     music1.currentTime = 0;
     console.log('Music 1 unlocked');
     
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
     // Unlock music 2
+    music2.volume = 0;
+    music2.muted = true;
     await music2.play();
+    console.log('Music 2 playing (muted)...');
+    await new Promise(resolve => setTimeout(resolve, 50));
     music2.pause();
     music2.currentTime = 0;
     console.log('Music 2 unlocked');
     
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
     // Unlock music 3
+    music3.volume = 0;
+    music3.muted = true;
     await music3.play();
+    console.log('Music 3 playing (muted)...');
+    await new Promise(resolve => setTimeout(resolve, 50));
     music3.pause();
     music3.currentTime = 0;
     console.log('Music 3 unlocked');
     
-    // Restore volume and unmute ALL at once
+    // Wait a bit before unmuting
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Restore volume and unmute
     music1.muted = false;
     music2.muted = false;
     music3.muted = false;

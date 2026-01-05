@@ -107,16 +107,18 @@
 <div id="startScreen">
   <div class="emoji">💝</div>
   <h1>Magical AR Love Card</h1>
-  <p>Point your camera at the special photo</p>
-  <p style="font-size: 16px; opacity: 0.7;">to reveal your magical gift</p>
+  <p>Point your camera at any special photo</p>
+  <p style="font-size: 16px; opacity: 0.7;">to reveal your magical gifts</p>
   <button id="startButton">✨ Start AR Experience ✨</button>
 </div>
 
-<div id="instruction">📷 Point camera at the photo card</div>
+<div id="instruction">📷 Point camera at a photo card</div>
 
 <div id="container"></div>
 
-<audio id="music" src="./music.mp3" loop></audio>
+<audio id="music1" src="./music.mp3" loop></audio>
+<audio id="music2" src="./music2.mp3" loop></audio>
+<audio id="music3" src="./music3.mp3" loop></audio>
 
 <script type="module">
 import * as THREE from 'three';
@@ -125,27 +127,141 @@ import { MindARThree } from 'mindar-image-three';
 const startScreen = document.getElementById('startScreen');
 const startButton = document.getElementById('startButton');
 const instruction = document.getElementById('instruction');
-const music = document.getElementById('music');
+const music1 = document.getElementById('music1');
+const music2 = document.getElementById('music2');
+const music3 = document.getElementById('music3');
 
-let mindarThree, renderer, scene, camera, anchor;
-let hearts = [];
-let sparkles = [];
-let textMesh;
+let mindarThree, renderer, scene, camera;
+let anchors = [];
+let currentTrackingIndex = -1;
 let audioUnlocked = false;
-let audioCtx, analyser, source, dataArray;
-let isTracking = false;
+let audioCtx, analyser1, analyser2, analyser3, source1, source2, source3, dataArray;
 
-// Initialize MindAR
+// Initialize MindAR with 3 targets (maxTrack: 1 means only one at a time)
 const initAR = async () => {
   mindarThree = new MindARThree({
     container: document.querySelector("#container"),
-    imageTargetSrc: "./targets.mind"
+    imageTargetSrc: "./targets.mind", // Contains all 3 images
+    maxTrack: 1 // Only track one photo at a time
   });
   
   ({ renderer, scene, camera } = mindarThree);
-  anchor = mindarThree.addAnchor(0);
   
-  // Create hearts particles (using heart shape sprites)
+  // Create 3 anchors (one for each photo)
+  for (let i = 0; i < 3; i++) {
+    const anchor = mindarThree.addAnchor(i);
+    anchors.push(anchor);
+    
+    // Create effects for each anchor
+    createEffects(anchor, i);
+  }
+  
+  // Animation loop
+  let time = 0;
+  renderer.setAnimationLoop(() => {
+    time += 0.016;
+    
+    // Animate all anchors
+    anchors.forEach((anchor, index) => {
+      if (!anchor.userData) return;
+      
+      const { hearts, sparkles, textMesh } = anchor.userData;
+      
+      // Animate hearts
+      hearts.forEach(heart => {
+        heart.position.y += heart.userData.velocity.y;
+        heart.position.x += heart.userData.velocity.x;
+        
+        if (heart.position.y > 1.2) {
+          heart.position.y = -0.8;
+          heart.position.x = (Math.random() - 0.5) * 1.2;
+        }
+      });
+      
+      // Animate sparkles
+      sparkles.forEach(sparkle => {
+        sparkle.userData.angle += sparkle.userData.speed;
+        sparkle.position.x = Math.cos(sparkle.userData.angle) * sparkle.userData.radius;
+        sparkle.position.z = Math.sin(sparkle.userData.angle) * sparkle.userData.radius;
+      });
+      
+      // Animate text
+      if (textMesh) {
+        textMesh.scale.setScalar(1 + Math.sin(time * 2.5) * 0.08);
+        textMesh.position.y = 0.75 + Math.sin(time * 1.5) * 0.05;
+      }
+    });
+    
+    // Beat detection for currently tracked photo
+    if (currentTrackingIndex >= 0 && audioCtx && !music1.paused) {
+      const analyser = [analyser1, analyser2, analyser3][currentTrackingIndex];
+      if (analyser) {
+        analyser.getByteFrequencyData(dataArray);
+        
+        let lowFreqSum = 0;
+        let lowCount = Math.floor(dataArray.length * 0.15);
+        for (let i = 0; i < lowCount; i++) {
+          lowFreqSum += dataArray[i];
+        }
+        let avgLow = lowFreqSum / lowCount;
+        let beatScale = 1 + (avgLow / 60) * 0.5;
+        
+        const textMesh = anchors[currentTrackingIndex].userData?.textMesh;
+        if (textMesh) {
+          textMesh.scale.setScalar(beatScale);
+        }
+      }
+    }
+    
+    renderer.render(scene, camera);
+  });
+  
+  // Setup target detection for all 3 photos
+  anchors.forEach((anchor, index) => {
+    anchor.onTargetFound = () => {
+      console.log(`Target ${index + 1} found!`);
+      currentTrackingIndex = index;
+      instruction.style.display = 'none';
+      
+      // Stop all music first
+      [music1, music2, music3].forEach(m => {
+        m.pause();
+        m.currentTime = 0;
+      });
+      
+      // Play the corresponding music
+      if (audioUnlocked) {
+        const music = [music1, music2, music3][index];
+        music.play()
+          .then(() => console.log(`Music ${index + 1} playing!`))
+          .catch(err => console.log('Music play failed:', err));
+      }
+    };
+    
+    anchor.onTargetLost = () => {
+      console.log(`Target ${index + 1} lost`);
+      
+      if (currentTrackingIndex === index) {
+        currentTrackingIndex = -1;
+        instruction.style.display = 'block';
+        instruction.textContent = '📷 Point camera at a photo card';
+        instruction.style.background = 'rgba(0,0,0,0.7)';
+        
+        // Stop music
+        const music = [music1, music2, music3][index];
+        music.pause();
+        music.currentTime = 0;
+      }
+    };
+  });
+};
+
+// Create effects for each anchor
+function createEffects(anchor, index) {
+  const hearts = [];
+  const sparkles = [];
+  
+  // Create hearts particles
   const heartCanvas = document.createElement('canvas');
   heartCanvas.width = 64;
   heartCanvas.height = 64;
@@ -178,7 +294,7 @@ const initAR = async () => {
     anchor.group.add(heart);
   }
   
-  // Create sparkles (smaller and more subtle)
+  // Create sparkles
   const sparkleGeometry = new THREE.SphereGeometry(0.008, 8, 8);
   const sparkleMaterial = new THREE.MeshBasicMaterial({ 
     color: 0xffffff,
@@ -202,17 +318,14 @@ const initAR = async () => {
     anchor.group.add(sparkle);
   }
   
-  // Create "I ❤️ You" text with emoji
+  // Create "I ❤️ You" text
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 256;
   const ctx = canvas.getContext('2d');
   
-  // Add glow effect
   ctx.shadowBlur = 30;
   ctx.shadowColor = '#ff5fa2';
-  
-  // Draw "I ❤️ You"
   ctx.fillStyle = '#ffcee8';
   ctx.font = 'bold 120px Arial';
   ctx.textAlign = 'center';
@@ -227,126 +340,62 @@ const initAR = async () => {
     depthTest: false
   });
   const geometry = new THREE.PlaneGeometry(1.2, 0.3);
-  textMesh = new THREE.Mesh(geometry, material);
+  const textMesh = new THREE.Mesh(geometry, material);
   textMesh.position.set(0, 0.75, 0.04);
   textMesh.renderOrder = 999;
   
   anchor.group.add(textMesh);
   
-  // Animation loop
-  let time = 0;
-  renderer.setAnimationLoop(() => {
-    time += 0.016;
-    
-    // Animate hearts
-    hearts.forEach(heart => {
-      heart.position.y += heart.userData.velocity.y;
-      heart.position.x += heart.userData.velocity.x;
-      
-      // Reset when goes too high
-      if (heart.position.y > 1.2) {
-        heart.position.y = -0.8;
-        heart.position.x = (Math.random() - 0.5) * 1.2;
-      }
-    });
-    
-    // Animate sparkles
-    sparkles.forEach(sparkle => {
-      sparkle.userData.angle += sparkle.userData.speed;
-      sparkle.position.x = Math.cos(sparkle.userData.angle) * sparkle.userData.radius;
-      sparkle.position.z = Math.sin(sparkle.userData.angle) * sparkle.userData.radius;
-    });
-    
-    // Animate text - pulse and float
-    if (textMesh) {
-      textMesh.scale.setScalar(1 + Math.sin(time * 2.5) * 0.08);
-      textMesh.position.y = 0.75 + Math.sin(time * 1.5) * 0.05;
-    }
-    
-    // Beat detection pulse
-    if (isTracking && audioCtx && analyser && !music.paused) {
-      analyser.getByteFrequencyData(dataArray);
-      
-      let lowFreqSum = 0;
-      let lowCount = Math.floor(dataArray.length * 0.15);
-      for (let i = 0; i < lowCount; i++) {
-        lowFreqSum += dataArray[i];
-      }
-      let avgLow = lowFreqSum / lowCount;
-      
-      // Beat response for text
-      let beatScale = 1 + (avgLow / 60) * 0.5;
-      
-      if (textMesh) {
-        textMesh.scale.setScalar(beatScale);
-      }
-    }
-    
-    renderer.render(scene, camera);
-  });
-  
-  // Setup target detection AFTER everything is initialized
-  anchor.onTargetFound = () => {
-    console.log('Target found!');
-    isTracking = true;
-    instruction.textContent = '💖 Magic activated!';
-    instruction.style.background = 'rgba(255,95,162,0.8)';
-    
-    if (audioUnlocked) {
-      music.play().catch(err => console.log('Music play failed:', err));
-    }
-  };
-  
-  anchor.onTargetLost = () => {
-    console.log('Target lost');
-    isTracking = false;
-    instruction.textContent = '📷 Point camera at the photo card';
-  instruction.style.background = 'rgba(0,0,0,0.7)';
-  instruction.style.display = 'block';
-    instruction.style.background = 'rgba(0,0,0,0.7)';
-    
-    if (audioUnlocked) {
-      music.pause();
-      music.currentTime = 0;
-    }
-  };
-};
+  // Store references
+  anchor.userData = { hearts, sparkles, textMesh };
+}
 
 // Start button handler
 startButton.addEventListener('click', async () => {
   console.log('Start button clicked');
   
-  // Hide start screen first
   startScreen.style.display = 'none';
-  instruction.style.display = 'none'; // Keep hidden initially
+  instruction.style.display = 'block';
   instruction.textContent = 'Loading...';
   
   try {
-    // Mute FIRST, then setup audio
-    music.volume = 0;
-    music.muted = true;
-    
-    await music.play();
-    console.log('Music played (muted) for unlock');
-    
-    music.pause();
-    music.currentTime = 0;
-    
-    // Setup Web Audio API
+    // Create AudioContext
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    source = audioCtx.createMediaElementSource(music);
-    analyser = audioCtx.createAnalyser();
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    analyser.fftSize = 512;
-    dataArray = new Uint8Array(analyser.frequencyBinCount);
     
-    // NOW unmute for later use
-    music.muted = false;
-    music.volume = 1;
+    // Setup all 3 music sources
+    source1 = audioCtx.createMediaElementSource(music1);
+    analyser1 = audioCtx.createAnalyser();
+    source1.connect(analyser1);
+    analyser1.connect(audioCtx.destination);
+    analyser1.fftSize = 512;
+    
+    source2 = audioCtx.createMediaElementSource(music2);
+    analyser2 = audioCtx.createAnalyser();
+    source2.connect(analyser2);
+    analyser2.connect(audioCtx.destination);
+    analyser2.fftSize = 512;
+    
+    source3 = audioCtx.createMediaElementSource(music3);
+    analyser3 = audioCtx.createAnalyser();
+    source3.connect(analyser3);
+    analyser3.connect(audioCtx.destination);
+    analyser3.fftSize = 512;
+    
+    dataArray = new Uint8Array(analyser1.frequencyBinCount);
+    
+    // Make sure all music is stopped
+    [music1, music2, music3].forEach(m => {
+      m.pause();
+      m.currentTime = 0;
+      m.volume = 1;
+    });
+    
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
     
     audioUnlocked = true;
-    console.log('Audio unlocked successfully');
+    console.log('Audio unlocked - all 3 songs ready');
   } catch (err) {
     console.log('Audio setup failed:', err);
   }
@@ -356,12 +405,13 @@ startButton.addEventListener('click', async () => {
   await initAR();
   console.log('AR initialized');
   
-  instruction.textContent = '📷 Point camera at the photo card';
+  instruction.textContent = '📷 Point camera at a photo card';
+  instruction.style.background = 'rgba(0,0,0,0.7)';
   
   // Start AR tracking
   console.log('Starting AR tracking...');
   await mindarThree.start();
-  console.log('AR tracking started - point at photo!');
+  console.log('AR tracking started - point at any photo!');
 });
 
 console.log('Magical AR Love Card loaded');

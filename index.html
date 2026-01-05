@@ -231,10 +231,21 @@ const initAR = async () => {
       
       // Play the corresponding music
       if (audioUnlocked) {
-        const music = [music1, music2, music3][index];
-        music.play()
-          .then(() => console.log(`Music ${index + 1} playing!`))
-          .catch(err => console.log('Music play failed:', err));
+        const musicToPlay = [music1, music2, music3][index];
+        console.log(`Attempting to play music ${index + 1}...`);
+        console.log('Music paused?', musicToPlay.paused);
+        console.log('Music src:', musicToPlay.src);
+        
+        musicToPlay.play()
+          .then(() => {
+            console.log(`Music ${index + 1} playing successfully!`);
+            console.log('Music playing:', !musicToPlay.paused);
+          })
+          .catch(err => {
+            console.error(`Music ${index + 1} play failed:`, err);
+          });
+      } else {
+        console.log('Audio not unlocked!');
       }
     };
     
@@ -248,9 +259,10 @@ const initAR = async () => {
         instruction.style.background = 'rgba(0,0,0,0.7)';
         
         // Stop music
-        const music = [music1, music2, music3][index];
-        music.pause();
-        music.currentTime = 0;
+        const musicToStop = [music1, music2, music3][index];
+        musicToStop.pause();
+        musicToStop.currentTime = 0;
+        console.log(`Music ${index + 1} stopped`);
       }
     };
   });

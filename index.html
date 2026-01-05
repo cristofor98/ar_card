@@ -446,38 +446,32 @@ startButton.addEventListener('click', async () => {
     
     // Music 1
     music1.volume = 0;
-    music1.muted = true;
     await music1.play();
-    await music1.pause();
+    music1.pause();
     music1.currentTime = 0;
-    music1.muted = false;
     music1.volume = 1;
     unlockedMusic[0] = true;
     console.log('Music 1 unlocked');
     
     // Small delay between unlocks
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // Music 2
     music2.volume = 0;
-    music2.muted = true;
     await music2.play();
-    await music2.pause();
+    music2.pause();
     music2.currentTime = 0;
-    music2.muted = false;
     music2.volume = 1;
     unlockedMusic[1] = true;
     console.log('Music 2 unlocked');
     
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // Music 3
     music3.volume = 0;
-    music3.muted = true;
     await music3.play();
-    await music3.pause();
+    music3.pause();
     music3.currentTime = 0;
-    music3.muted = false;
     music3.volume = 1;
     unlockedMusic[2] = true;
     console.log('Music 3 unlocked');

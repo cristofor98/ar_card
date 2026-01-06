@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Magical AR Love Card</title>
+  <title>Magical Card</title>
   
   <script type="importmap">
   {
@@ -109,13 +109,13 @@
 
 <div id="startScreen">
   <div class="emoji">💝</div>
-  <h1>Magical AR Love Card</h1>
+  <h1>Magical Card</h1>
   <p>Point your camera at any special photo</p>
   <p style="font-size: 16px; opacity: 0.7;">to reveal your magical gifts</p>
-  <button id="startButton">✨ Start AR Experience ✨</button>
+  <button id="startButton">✨ Start Magic Experience ✨</button>
 </div>
 
-<div id="instruction">📷 Point camera at a photo card</div>
+<div id="instruction"> Point camera at a photo card</div>
 
 <div id="container"></div>
 
@@ -251,7 +251,7 @@ const initAR = async () => {
       if (currentTrackingIndex === index) {
         currentTrackingIndex = -1;
         instruction.style.display = 'block';
-        instruction.textContent = '📷 Point camera at a photo card';
+        instruction.textContent = 'Point camera at a photo card';
         
         const musicToStop = [music1, music2, music3][index];
         musicToStop.pause();
@@ -322,9 +322,9 @@ function createEffects(anchor, index) {
   
   // Different text for each photo
   const texts = [
-    'I ❤️ You',           // Photo 1
-    'Happy Holidays',     // Photo 2
-    'Merry Christmas'     // Photo 3
+    'I love you, Alexandrina ❤️',  // Photo 1
+    'My happiness',                 // Photo 2
+    'Crăciun Fericit'              // Photo 3
   ];
   
   const canvas = document.createElement('canvas');
@@ -336,11 +336,13 @@ function createEffects(anchor, index) {
   ctx.shadowColor = '#ff5fa2';
   ctx.fillStyle = '#ffcee8';
   
-  // Smaller font for longer text
+  // Different font sizes for different texts
   if (index === 0) {
-    ctx.font = 'bold 100px Arial'; // "I ❤️ You" - shorter
+    ctx.font = 'bold 50px Arial'; // "I love you, Alexandrina ❤️" - longest
+  } else if (index === 1) {
+    ctx.font = 'bold 80px Arial'; // "My happiness" - medium
   } else {
-    ctx.font = 'bold 70px Arial'; // "Happy Holidays" / "Merry Christmas" - longer
+    ctx.font = 'bold 70px Arial'; // "Merry Christmas" - medium
   }
   
   ctx.textAlign = 'center';
@@ -436,7 +438,7 @@ startButton.addEventListener('click', async () => {
   await initAR();
   console.log('AR initialized');
   
-  instruction.textContent = '📷 Point camera at a photo card';
+  instruction.textContent = 'Point camera at a photo card';
   
   console.log('Starting AR tracking...');
   await mindarThree.start();
